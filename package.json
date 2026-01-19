@@ -12,7 +12,12 @@
     "type": "git",
     "url": "git+https://github.com/isiezb/t1allstarsbackend.git"
   },
-  "keywords": ["tournament", "api", "express", "mongodb"],
+  "keywords": [
+    "tournament",
+    "api",
+    "express",
+    "mongodb"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -20,6 +25,7 @@
   },
   "homepage": "https://github.com/isiezb/t1allstarsbackend#readme",
   "dependencies": {
+    "@supabase/supabase-js": "^2.90.1",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

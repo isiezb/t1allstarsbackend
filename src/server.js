@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
@@ -17,10 +16,8 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/t1allstars')
-  .then(() => console.log('MongoDB connected'))
-  .catch((error) => console.error('MongoDB error:', error));
+// Supabase is connected via environment variables
+console.log('Supabase connected:', process.env.SUPABASE_URL ? 'Yes' : 'No');
 
 // Routes
 app.use('/api/tournaments', require('./routes/tournaments'));
@@ -44,4 +41,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('Supabase API connected to:', process.env.SUPABASE_URL);
+});
 });
