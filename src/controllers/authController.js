@@ -8,10 +8,10 @@ exports.register = async (req, res) => {
     const { username, email, password } = req.body;
 
     // Check if admin exists
-    const { data: existing } = await supabase
+    const { data: existing, error: checkError } = await supabase
       .from('admins')
       .select('*')
-      .or(`username.eq.${username},email.eq.${email}`);
+      .or(`username.eq."${username}",email.eq."${email}"`);
 
     if (existing && existing.length > 0) {
       return res.status(400).json({ error: 'Admin already exists' });
