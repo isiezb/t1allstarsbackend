@@ -45,6 +45,7 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('Login attempt:', { email, hasPassword: !!password });
 
     const { data, error } = await supabase
       .from('admins')
@@ -52,12 +53,17 @@ exports.login = async (req, res) => {
       .eq('email', email)
       .single();
 
+    console.log('Supabase query result:', { found: !!data, error: error?.message });
+
     if (error || !data) {
+      console.log('Login failed: user not found');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const isMatch = await bcrypt.compare(password, data.password);
+    console.log('Password match:', isMatch);
     if (!isMatch) {
+      console.log('Login failed: password mismatch');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -65,6 +71,7 @@ exports.login = async (req, res) => {
       expiresIn: '7d',
     });
 
+    console.log('Login successful for:', email);
     res.json({ token, admin: { id: data.id, username: data.username, email } });
   } catch (error) {
     res.status(500).json({ error: error.message });
