@@ -28,6 +28,7 @@ app.use('/api/standings', require('./routes/standings'));
 app.use('/api/players', require('./routes/players'));
 app.use('/api/results', require('./routes/results'));
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/rules', require('./routes/rules'));
 
 // Health check
 app.get('/api/health', (req, res) => {
