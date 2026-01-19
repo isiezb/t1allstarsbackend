@@ -43,4 +43,3 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log('Supabase API connected to:', process.env.SUPABASE_URL);
 });
-});
