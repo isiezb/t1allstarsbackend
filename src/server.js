@@ -10,6 +10,8 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:3001',
     'https://t1allstars.vercel.app',
+    'https://t1allstars-frontend.onrender.com',
+    /\.onrender\.com$/,  // Allow all Render domains
     process.env.FRONTEND_URL,
   ],
   credentials: true,
