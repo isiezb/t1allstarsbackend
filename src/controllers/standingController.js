@@ -1,10 +1,15 @@
-const Standing = require('../models/Standing');
+const supabase = require('../lib/supabase');
 
 // Get all standings
 exports.getStandings = async (req, res) => {
   try {
-    const standings = await Standing.find().sort({ rank: 1 });
-    res.json(standings);
+    const { data, error } = await supabase
+      .from('standings')
+      .select('*')
+      .order('rank', { ascending: true });
+
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -13,9 +18,14 @@ exports.getStandings = async (req, res) => {
 // Create standing
 exports.createStanding = async (req, res) => {
   try {
-    const standing = new Standing(req.body);
-    await standing.save();
-    res.status(201).json(standing);
+    const { data, error } = await supabase
+      .from('standings')
+      .insert([req.body])
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(201).json(data);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -24,11 +34,16 @@ exports.createStanding = async (req, res) => {
 // Update standing
 exports.updateStanding = async (req, res) => {
   try {
-    const standing = await Standing.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!standing) return res.status(404).json({ error: 'Standing not found' });
-    standing.updatedAt = Date.now();
-    await standing.save();
-    res.json(standing);
+    const { data, error } = await supabase
+      .from('standings')
+      .update({ ...req.body, updated_at: new Date() })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Standing not found' });
+    res.json(data);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -37,8 +52,12 @@ exports.updateStanding = async (req, res) => {
 // Delete standing
 exports.deleteStanding = async (req, res) => {
   try {
-    const standing = await Standing.findByIdAndDelete(req.params.id);
-    if (!standing) return res.status(404).json({ error: 'Standing not found' });
+    const { error } = await supabase
+      .from('standings')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) throw error;
     res.json({ message: 'Standing deleted' });
   } catch (error) {
     res.status(500).json({ error: error.message });

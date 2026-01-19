@@ -1,10 +1,14 @@
-const Player = require('../models/Player');
+const supabase = require('../lib/supabase');
 
 // Get all players
 exports.getPlayers = async (req, res) => {
   try {
-    const players = await Player.find();
-    res.json(players);
+    const { data, error } = await supabase
+      .from('players')
+      .select('*');
+
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -13,9 +17,15 @@ exports.getPlayers = async (req, res) => {
 // Get player by name
 exports.getPlayerByName = async (req, res) => {
   try {
-    const player = await Player.findOne({ name: req.params.name });
-    if (!player) return res.status(404).json({ error: 'Player not found' });
-    res.json(player);
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .eq('name', req.params.name)
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Player not found' });
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -24,9 +34,14 @@ exports.getPlayerByName = async (req, res) => {
 // Create player
 exports.createPlayer = async (req, res) => {
   try {
-    const player = new Player(req.body);
-    await player.save();
-    res.status(201).json(player);
+    const { data, error } = await supabase
+      .from('players')
+      .insert([req.body])
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(201).json(data);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -35,11 +50,16 @@ exports.createPlayer = async (req, res) => {
 // Update player
 exports.updatePlayer = async (req, res) => {
   try {
-    const player = await Player.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!player) return res.status(404).json({ error: 'Player not found' });
-    player.updatedAt = Date.now();
-    await player.save();
-    res.json(player);
+    const { data, error } = await supabase
+      .from('players')
+      .update({ ...req.body, updated_at: new Date() })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Player not found' });
+    res.json(data);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -48,8 +68,12 @@ exports.updatePlayer = async (req, res) => {
 // Delete player
 exports.deletePlayer = async (req, res) => {
   try {
-    const player = await Player.findByIdAndDelete(req.params.id);
-    if (!player) return res.status(404).json({ error: 'Player not found' });
+    const { error } = await supabase
+      .from('players')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) throw error;
     res.json({ message: 'Player deleted' });
   } catch (error) {
     res.status(500).json({ error: error.message });

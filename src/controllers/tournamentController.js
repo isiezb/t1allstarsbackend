@@ -1,10 +1,15 @@
-const Tournament = require('../models/Tournament');
+const supabase = require('../lib/supabase');
 
 // Get all tournaments
 exports.getTournaments = async (req, res) => {
   try {
-    const tournaments = await Tournament.find().sort({ week: 1 });
-    res.json(tournaments);
+    const { data, error } = await supabase
+      .from('tournaments')
+      .select('*')
+      .order('week', { ascending: true });
+
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -13,9 +18,15 @@ exports.getTournaments = async (req, res) => {
 // Get tournament by week
 exports.getTournamentByWeek = async (req, res) => {
   try {
-    const tournament = await Tournament.findOne({ week: req.params.week });
-    if (!tournament) return res.status(404).json({ error: 'Tournament not found' });
-    res.json(tournament);
+    const { data, error } = await supabase
+      .from('tournaments')
+      .select('*')
+      .eq('week', req.params.week)
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Tournament not found' });
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -24,9 +35,14 @@ exports.getTournamentByWeek = async (req, res) => {
 // Create tournament
 exports.createTournament = async (req, res) => {
   try {
-    const tournament = new Tournament(req.body);
-    await tournament.save();
-    res.status(201).json(tournament);
+    const { data, error } = await supabase
+      .from('tournaments')
+      .insert([req.body])
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(201).json(data);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -35,11 +51,16 @@ exports.createTournament = async (req, res) => {
 // Update tournament
 exports.updateTournament = async (req, res) => {
   try {
-    const tournament = await Tournament.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!tournament) return res.status(404).json({ error: 'Tournament not found' });
-    tournament.updatedAt = Date.now();
-    await tournament.save();
-    res.json(tournament);
+    const { data, error } = await supabase
+      .from('tournaments')
+      .update({ ...req.body, updated_at: new Date() })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Tournament not found' });
+    res.json(data);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -48,8 +69,12 @@ exports.updateTournament = async (req, res) => {
 // Delete tournament
 exports.deleteTournament = async (req, res) => {
   try {
-    const tournament = await Tournament.findByIdAndDelete(req.params.id);
-    if (!tournament) return res.status(404).json({ error: 'Tournament not found' });
+    const { error } = await supabase
+      .from('tournaments')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) throw error;
     res.json({ message: 'Tournament deleted' });
   } catch (error) {
     res.status(500).json({ error: error.message });

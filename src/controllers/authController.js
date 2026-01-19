@@ -1,4 +1,5 @@
-const Admin = require('../models/Admin');
+const supabase = require('../lib/supabase');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 // Register admin
@@ -7,20 +8,34 @@ exports.register = async (req, res) => {
     const { username, email, password } = req.body;
 
     // Check if admin exists
-    let admin = await Admin.findOne({ $or: [{ username }, { email }] });
-    if (admin) {
+    const { data: existing } = await supabase
+      .from('admins')
+      .select('*')
+      .or(`username.eq.${username},email.eq.${email}`);
+
+    if (existing && existing.length > 0) {
       return res.status(400).json({ error: 'Admin already exists' });
     }
 
-    admin = new Admin({ username, email, password });
-    await admin.save();
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create admin
+    const { data, error } = await supabase
+      .from('admins')
+      .insert([{ username, email, password: hashedPassword }])
+      .select()
+      .single();
+
+    if (error) throw error;
 
     // Create JWT token
-    const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: data.id }, process.env.JWT_SECRET, {
       expiresIn: '7d',
     });
 
-    res.status(201).json({ token, admin: { id: admin._id, username, email } });
+    res.status(201).json({ token, admin: { id: data.id, username, email } });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -31,21 +46,26 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const admin = await Admin.findOne({ email });
-    if (!admin) {
+    const { data, error } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (error || !data) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const isMatch = await admin.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, data.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: data.id }, process.env.JWT_SECRET, {
       expiresIn: '7d',
     });
 
-    res.json({ token, admin: { id: admin._id, username: admin.username, email } });
+    res.json({ token, admin: { id: data.id, username: data.username, email } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -54,8 +74,14 @@ exports.login = async (req, res) => {
 // Get current admin
 exports.getCurrentAdmin = async (req, res) => {
   try {
-    const admin = await Admin.findById(req.adminId).select('-password');
-    res.json(admin);
+    const { data, error } = await supabase
+      .from('admins')
+      .select('id, username, email')
+      .eq('id', req.adminId)
+      .single();
+
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
