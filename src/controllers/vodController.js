@@ -1,4 +1,5 @@
 const supabase = require('../lib/supabase');
+const { fetchVideoMetadata } = require('../lib/videoMetadata');
 
 // Get all VODs
 exports.getVODs = async (req, res) => {
@@ -18,9 +19,24 @@ exports.getVODs = async (req, res) => {
 // Create VOD
 exports.createVOD = async (req, res) => {
   try {
+    const { link, type } = req.body;
+
+    // Fetch video metadata from the link
+    const metadata = await fetchVideoMetadata(link);
+
+    // Merge user input with fetched metadata
+    const vodData = {
+      link,
+      type,
+      title: metadata.title,
+      date: metadata.date,
+      thumbnail: metadata.thumbnail,
+      duration: metadata.duration,
+    };
+
     const { data, error } = await supabase
       .from('vods')
-      .insert([req.body])
+      .insert([vodData])
       .select()
       .single();
 
