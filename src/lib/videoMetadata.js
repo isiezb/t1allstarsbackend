@@ -2,12 +2,14 @@ const axios = require('axios');
 
 /**
  * Extract video ID from YouTube URL
+ * Supports: regular videos, shorts, embeds, and short links
  */
 function extractYouTubeId(url) {
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
     /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
     /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,  // YouTube Shorts support
   ];
 
   for (const pattern of patterns) {
