@@ -9,6 +9,8 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:3001',
+    'https://t1allstars.com',
+    'https://www.t1allstars.com',
     'https://t1allstars.vercel.app',
     'https://t1allstars.onrender.com',
     'https://t1allstars-frontend.onrender.com',
