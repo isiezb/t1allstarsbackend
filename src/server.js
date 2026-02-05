@@ -33,6 +33,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/rules', require('./routes/rules'));
 app.use('/api/vods', require('./routes/vods'));
 app.use('/api/application-url', require('./routes/application'));
+app.use('/api/pickems', require('./routes/pickems'));
 
 // Health check
 app.get('/api/health', (req, res) => {
