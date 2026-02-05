@@ -240,6 +240,9 @@ exports.setResultsAndScore = async (req, res) => {
       place_7th_8th,
     };
 
+    // Track points per user to update their totals
+    const userPoints = {};
+
     for (const pick of picks) {
       const points = calculatePoints(pick, results);
 
@@ -251,6 +254,32 @@ exports.setResultsAndScore = async (req, res) => {
           updated_at: new Date().toISOString(),
         })
         .eq('id', pick.id);
+
+      // Accumulate points for each user
+      if (!userPoints[pick.user_id]) {
+        userPoints[pick.user_id] = 0;
+      }
+      userPoints[pick.user_id] += points;
+    }
+
+    // Update each user's total_points
+    for (const [userId, points] of Object.entries(userPoints)) {
+      // Get current total_points
+      const { data: user } = await supabase
+        .from('pickems_users')
+        .select('total_points')
+        .eq('id', userId)
+        .single();
+
+      if (user) {
+        await supabase
+          .from('pickems_users')
+          .update({
+            total_points: (user.total_points || 0) + points,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', userId);
+      }
     }
 
     res.json({
